@@ -28,6 +28,7 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Reflection;
 using System.Text;
 using System.Windows.Forms;
 
@@ -44,7 +45,31 @@ namespace Zhwang.SuperContextMenu
                 Popup += VistaOrLaterPopup;
         }
 
-        public bool Visible { get; private set; }
+        private bool _sourceIsNotifyIcon = false;
+        public bool SourceIsNotifyIcon { get { return _sourceIsNotifyIcon; } set { _sourceIsNotifyIcon = value; } }
+
+        private FieldInfo _notifyIconNativeWindowInfo;
+        public NotifyIcon SourceNotifyIcon { get; set; }
+
+        private bool _visible = false; // This is set ONLY by the Popup/Collapse events
+        public bool Visible
+        {
+            get
+            {
+                if (!SourceIsNotifyIcon || SourceNotifyIcon == null) // Fallback to this if the NotifyIcon is null
+                    return _visible;
+                else
+                {
+                    // http://stackoverflow.com/q/8033317
+                    if (_notifyIconNativeWindowInfo == null)
+                        _notifyIconNativeWindowInfo = typeof(NotifyIcon)
+                            .GetField("window", BindingFlags.NonPublic | BindingFlags.Instance);
+                    NativeWindow niNativeWindow = (NativeWindow)_notifyIconNativeWindowInfo.GetValue(SourceNotifyIcon);
+                    return niNativeWindow.Handle == NativeMethods.GetForegroundWindow();
+                }
+            }
+            private set { _visible = value; }
+        }
 
         public void FixAfterAdd(Control control, Point point)
         {
@@ -66,6 +91,7 @@ namespace Zhwang.SuperContextMenu
         }
         private void MainCollapse(object sender, EventArgs e)
         {
+            // This event is only fired when SourceControl is set
             Visible = false;
         }
 

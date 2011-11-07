@@ -12,6 +12,9 @@ namespace Zhwang.SuperContextMenu
 
         [DllImport("gdi32.dll")]
         public static extern bool DeleteObject(IntPtr hObject);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        public static extern IntPtr GetForegroundWindow();
     }
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
