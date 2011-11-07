@@ -82,7 +82,14 @@ namespace Zhwang.SuperContextMenu
         }
         public void FixAfterAdd()
         {
-            FixAfterAdd(SourceControl);
+            if (!SourceIsNotifyIcon)
+                FixAfterAdd(SourceControl);
+            else if (Visible)
+            {
+                MethodInfo mi = typeof(NotifyIcon)
+                    .GetMethod("ShowContextMenu", BindingFlags.Instance | BindingFlags.NonPublic);
+                mi.Invoke(SourceNotifyIcon, null);
+            }
         }
 
         private void MainPopup(object sender, EventArgs e)
