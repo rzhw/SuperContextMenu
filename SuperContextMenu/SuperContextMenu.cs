@@ -38,8 +38,35 @@ namespace Zhwang.SuperContextMenu
         public SuperContextMenu()
             : base()
         {
+            Collapse += MainCollapse;
+            Popup += MainPopup;
             if (SysInfo.IsVistaOrLater)
                 Popup += VistaOrLaterPopup;
+        }
+
+        public bool Visible { get; private set; }
+
+        public void FixAfterAdd(Control control, Point point)
+        {
+            if (Visible && control != null)
+                Show(control, point);
+        }
+        public void FixAfterAdd(Control control)
+        {
+            FixAfterAdd(control, Point.Empty);
+        }
+        public void FixAfterAdd()
+        {
+            FixAfterAdd(SourceControl);
+        }
+
+        private void MainPopup(object sender, EventArgs e)
+        {
+            Visible = true;
+        }
+        private void MainCollapse(object sender, EventArgs e)
+        {
+            Visible = false;
         }
 
         IntPtr _lastBitmapHandle = IntPtr.Zero;
@@ -60,20 +87,24 @@ namespace Zhwang.SuperContextMenu
                     {
                         SuperMenuItem menuItem = (SuperMenuItem)menuItems[i];
 
-                        // Don't bother if we don't have an image (duh) or if we've already converted this before
-                        if (menuItem.Image != null && menuItem.BitmapHandle != _lastBitmapHandle)
+                        // Don't bother if we don't have an image (duh)
+                        if (menuItem.Image != null)
                         {
-                            // Dispose of the old image. TODO: It's commented out as it causes issues. Figure out why.
-                            //if (_lastBitmapConvertedHandle != IntPtr.Zero)
-                            //    NativeMethods.DeleteObject(_lastBitmapConvertedHandle);
-
-                            // We need to convert the image to 32bppPArgb format for use with the ContextMenu
-                            using (Bitmap convertedImage = new Bitmap(menuItem._bitmap.Width, menuItem._bitmap.Height,
-                                System.Drawing.Imaging.PixelFormat.Format32bppPArgb))
+                            // Stuff to do if we haven't converted this image before
+                            if (menuItem.BitmapHandle != _lastBitmapHandle)
                             {
-                                using (Graphics g = Graphics.FromImage(convertedImage))
-                                    g.DrawImage(menuItem._bitmap, 0, 0, menuItem._bitmap.Width, menuItem._bitmap.Height);
-                                _lastBitmapConvertedHandle = convertedImage.GetHbitmap(Color.FromArgb(0, 0, 0, 0));
+                                // Dispose of the old image. TODO: It's commented out as it causes issues. Figure out why.
+                                //if (_lastBitmapConvertedHandle != IntPtr.Zero)
+                                //    NativeMethods.DeleteObject(_lastBitmapConvertedHandle);
+
+                                // We need to convert the image to 32bppPArgb format for use with the ContextMenu
+                                using (Bitmap convertedImage = new Bitmap(menuItem._bitmap.Width, menuItem._bitmap.Height,
+                                    System.Drawing.Imaging.PixelFormat.Format32bppPArgb))
+                                {
+                                    using (Graphics g = Graphics.FromImage(convertedImage))
+                                        g.DrawImage(menuItem._bitmap, 0, 0, menuItem._bitmap.Width, menuItem._bitmap.Height);
+                                    _lastBitmapConvertedHandle = convertedImage.GetHbitmap(Color.FromArgb(0, 0, 0, 0));
+                                }
                             }
 
                             // Finally, set the image!

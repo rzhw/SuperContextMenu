@@ -21,6 +21,15 @@ namespace SuperContextMenuDemo
             ContextMenu = _menu;
 
             _menu.MenuItems.Add(new SuperMenuItem() { Text = "Delete something", Image = Properties.Resources.DeleteHS });
+
+            Timer a = new Timer() { Interval = 3000 };
+            a.Tick += (sender, e) =>
+            {
+                _menu.MenuItems.Add(new SuperMenuItem() { Text = "No wai!" });
+                _menu.FixAfterAdd();
+            };
+            a.Start();
         }
+
     }
 }
